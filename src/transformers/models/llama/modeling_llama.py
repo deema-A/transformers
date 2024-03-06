@@ -59,7 +59,9 @@ logger = logging.get_logger(__name__)
 
 _CONFIG_FOR_DOC = "LlamaConfig"
 
-
+"""
+Load classification model best_model_7b_1_0.pth here 
+"""
 def _get_unpad_data(attention_mask):
     seqlens_in_batch = attention_mask.sum(dim=-1, dtype=torch.int32)
     indices = torch.nonzero(attention_mask.flatten(), as_tuple=False).flatten()
@@ -1008,10 +1010,15 @@ class LlamaModel(LlamaPreTrainedModel):
         all_self_attns = () if output_attentions else None
         next_decoder_cache = None
 
+        count = 0
         for decoder_layer in self.layers:
             if output_hidden_states:
+                if count == 13:
+                    noise = torch.randn_like(hidden_states) * 0.1
+                    hidden_states = hidden_states + noise
                 all_hidden_states += (hidden_states,)
 
+            count += 1
             if self.gradient_checkpointing and self.training:
                 layer_outputs = self._gradient_checkpointing_func(
                     decoder_layer.__call__,
