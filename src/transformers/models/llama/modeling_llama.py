@@ -61,8 +61,11 @@ logger = logging.get_logger(__name__)
 _CONFIG_FOR_DOC = "LlamaConfig"
 
 """
-Load classification model best_model_7b_1_0.pth here 
+Load classification model best_model_7b_1_0.pth here
 """
+
+class_model = "/projects/bcky/deema/research/transformers_old/src/transformers/models/llama/city_llama_7b_mode_0_layer_13.pth"
+
 def _get_unpad_data(attention_mask):
     seqlens_in_batch = attention_mask.sum(dim=-1, dtype=torch.int32)
     indices = torch.nonzero(attention_mask.flatten(), as_tuple=False).flatten()
@@ -907,6 +910,40 @@ LLAMA_INPUTS_DOCSTRING = r"""
             Whether or not to return a [`~utils.ModelOutput`] instead of a plain tuple.
 """
 
+####
+class SimpleMLP(nn.Module):
+    def __init__(self, input_size, hidden_size, output_size):
+        super(SimpleMLP, self).__init__()
+        self.fc = nn.Linear(input_size, hidden_size)  # Input to Hidden Layer
+        self.relu = nn.ReLU()
+        self.fc2 = nn.Linear(hidden_size, output_size)  # Hidden to Output Layer
+        self.sigmoid = nn.Sigmoid()  # Since it's a binary classification
+
+    def forward(self, x):
+        out = self.fc(x)
+        out = self.relu(out)
+        out = self.fc2(out)
+        out = self.sigmoid(out)
+        return out
+###
+def load_model(model_path):
+    # Load the pre-trained model
+    model = SimpleMLP(4096, 512, 1)
+    model_weights = torch.load(model_path)
+    model.load_state_dict(model_weights)
+    model.eval()  # Set the model to inference mode
+    return model
+
+model_path = 'city_llama_7b_mode_0_layer_13.pth'  # Path to your model file
+model = load_model(model_path)
+
+def predis(model, input_tensor):
+    # Perform inference
+    input_tensor = input_tensor.squeeze(0)
+    input_tensor = torch.mean(input_tensor, dim=0)
+    with torch.no_grad():  # No need to track gradients for inference
+        output = model(input_tensor)
+    return torch.round(output)
 
 @add_start_docstrings(
     "The bare LLaMA Model outputting raw hidden-states without any specific head on top.",
@@ -1010,10 +1047,12 @@ class LlamaModel(LlamaPreTrainedModel):
 
         count = 0
         for decoder_layer in self.layers:
-            if output_hidden_states:
-                if count == 13:
+            if count == 13:
+                if predis(model, hidden_states) <= 0:
                     noise = torch.randn_like(hidden_states) * 0.1
                     hidden_states = hidden_states + noise
+
+            if output_hidden_states:
                 all_hidden_states += (hidden_states,)
 
             count += 1
