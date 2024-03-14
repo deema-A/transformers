@@ -965,6 +965,7 @@ class LlamaModel(LlamaPreTrainedModel):
 
     def __init__(self, config: LlamaConfig):
         super().__init__(config)
+        raise NotImplementedError("ERROR")
         self.padding_idx = config.pad_token_id
         self.vocab_size = config.vocab_size
 
