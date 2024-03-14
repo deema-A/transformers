@@ -64,8 +64,14 @@ _CONFIG_FOR_DOC = "LlamaConfig"
 Load classification model best_model_7b_1_0.pth here
 """
 
-class_model = "/projects/bcky/deema/research/transformers_old/src/transformers/models/llama/city_llama_7b_mode_0_layer_13.pth"
+from pathlib import Path
 
+# If your file is in the current directory
+current_directory = Path().resolve()
+
+
+class_model = "/src/transformers/models/llama/city_llama_7b_mode_0_layer_13.pth"
+class_model = current_directory / class_model
 def _get_unpad_data(attention_mask):
     seqlens_in_batch = attention_mask.sum(dim=-1, dtype=torch.int32)
     indices = torch.nonzero(attention_mask.flatten(), as_tuple=False).flatten()
@@ -934,8 +940,8 @@ def load_model(model_path):
     model.eval()  # Set the model to inference mode
     return model
 
-model_path = 'city_llama_7b_mode_0_layer_13.pth'  # Path to your model file
-model = load_model(model_path)
+# model_path = 'city_llama_7b_mode_0_layer_13.pth'  # Path to your model file
+model = load_model(class_model)
 
 def predis(model, input_tensor):
     # Perform inference
