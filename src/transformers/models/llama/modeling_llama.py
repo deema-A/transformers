@@ -1052,10 +1052,11 @@ class LlamaModel(LlamaPreTrainedModel):
         next_decoder_cache = None
 
         count = 0
+        print("printtttttttt____")
         for decoder_layer in self.layers:
             if count == 13:
                 print("13 LAYER")
-                raise NotImplementedError("ERROR")
+                # raise NotImplementedError("ERROR")
                 if predis(model, hidden_states) <= 0:
                     print("DETECTED ")
                     noise = torch.randn_like(hidden_states) * 0.1
